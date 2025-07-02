@@ -19,7 +19,7 @@ WORKDIR /var/www
 COPY . .
 
 RUN composer install
-RUN npm install && npm run build
+RUN npm install
 COPY .env.example .env
 RUN php artisan key:generate
 RUN php artisan migrate --seed
