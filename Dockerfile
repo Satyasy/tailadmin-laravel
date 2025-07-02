@@ -19,7 +19,8 @@ WORKDIR /var/www
 COPY . .
 
 RUN composer install
-RUN npm install
+RUN npm config set registry https://registry.npmmirror.com/ \
+  && npm install --fetch-timeout=60000 --cache-min=86400
 COPY .env.example .env
 RUN php artisan key:generate
 RUN php artisan migrate --seed
