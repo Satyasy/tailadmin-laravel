@@ -4,8 +4,8 @@ FROM php:8.1-fpm
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libonig-dev libxml2-dev libzip-dev \
     libpq-dev libjpeg-dev libpng-dev libfreetype6-dev \
-    libmcrypt-dev libonig-dev libssl-dev \
-    nodejs npm
+    nodejs npm default-mysql-client \
+    && docker-php-ext-install pdo pdo_mysql
 
 # Install Composer (latest)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
