@@ -1,0 +1,45 @@
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  app:
+    image: ${DOCKERHUB_USERNAME}/tailadmin-laravel:beta
+    container_name: tailadmin-app-prod
+    restart: unless-stopped
+    ports:
+      - "8090:8000"
+    networks:
+      - tailadmin-network
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=tailadmin
+      - DB_USERNAME=root
+      - DB_PASSWORD=root123
+      - APP_ENV=production
+      - APP_DEBUG=false
+
+  db:
+    image: mysql:8.0
+    container_name: tailadmin-db-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tailadmin
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_PASSWORD: root123
+      MYSQL_USER: tailadmin
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - tailadmin-network
+
+volumes:
+  db_data:
+
+networks:
+  tailadmin-network:
+    driver: bridge
