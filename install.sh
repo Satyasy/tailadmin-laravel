@@ -31,7 +31,14 @@ sed -i 's/DB_PASSWORD=/DB_PASSWORD=password/g' .env
 
 # Wait for database to be ready (for Docker environment)
 echo "Waiting for database connection..."
-sleep 10
+for i in {1..30}; do
+  if php artisan migrate:status > /dev/null 2>&1; then
+    echo "Database is ready!"
+    break
+  fi
+  echo "Waiting..."
+  sleep 2
+done
 
 # Run database migrations and seeders
 echo "Running database migrations..."
