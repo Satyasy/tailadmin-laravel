@@ -1,120 +1,36 @@
-name: TailAdmin Laravel CI/CD
-run-name: Build, Push and Deploy TailAdmin Laravel Application
+name: CI/CD Laravel Docker
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-
-env:
-  IMAGE_NAME: "${{ secrets.DOCKER_USER }}/tailadmin-laravel:beta"
-  DOCKER_USER: "${{ secrets.DOCKER_USER }}"
 
 jobs:
-  cleanup:
+  build:
     runs-on: self-hosted
+
     steps:
-      - name: Clean up existing containers and images
-        continue-on-error: true
-        run: |
-          # Stop and remove existing containers
-          docker stop $(docker ps -q --filter "name=tailadmin") || true
-          docker rm $(docker ps -aq --filter "name=tailadmin") || true
-          # Remove old images
-          docker rmi $(docker images "${{ secrets.DOCKER_USER }}/tailladmin-laravel" -q) || true
-          # Clean up system
-          docker system prune -f
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-  build-and-push:
-    needs: cleanup
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKER_PASS }}
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta .
 
-      - name: Build Docker image
-        run: |
-          docker build -t $IMAGE_NAME .
-          echo "Docker image built successfully"
+    - name: Push Docker Image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta
 
-      - name: List Docker images
-        run: docker images | grep tailadmin-laravel
-
-      - name: Push image to DockerHub
-        run: |
-          docker push $IMAGE_NAME
-          echo "Image pushed to DockerHub successfully"
-
-  deploy:
-    needs: build-and-push
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Stop existing services
-        continue-on-error: true
-        run: |
-          docker compose down --remove-orphans
-          docker volume prune -f
-
-      - name: Deploy with Docker Compose
-        run: |
-          export DOCKER_USER=${{ secrets.DOCKER_USER }}
-          docker compose up -d
-
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services to start..."
-          sleep 30
-
-      - name: Check service status
-        run: |
-          docker compose ps
-          echo "Checking if application is accessible..."
-          curl -f http://localhost:8090 || echo "Application not yet ready"
-
-      - name: Show logs
-        if: failure()
-        run: |
-          echo "=== Web Container Logs ==="
-          docker compose logs web
-          echo "=== MySQL Container Logs ==="
-          docker compose logs mysql
-
-  verify-deployment:
-    needs: deploy
-    runs-on: self-hosted
-    steps:
-      - name: Verify application is running
-        run: |
-          sleep 15
-          if curl -f -s http://localhost:8090 > /dev/null; then
-            echo "✅ TailAdmin Laravel is successfully deployed and accessible on port 8090"
-            echo "🌐 Access your application at: http://your-server-ip:8090"
-            echo "👤 Admin Login: admin@tailadmin.dev / admin"
-          else
-            echo "❌ Application deployment verification failed"
-            exit 1
-          fi
-
-      - name: Display deployment summary
-        run: |
-          echo "=== Deployment Summary ==="
-          echo "Application: TailAdmin Laravel"
-          echo "Port: 8090"
-          echo "Image: ${{ secrets.DOCKER_USER }}/tailadmin-laravel:beta"
-          echo "Status: Successfully deployed"
-          echo "=========================="
+    - name: Run Container
+      run: |
+        docker stop tailadmin-laravel || true && docker rm tailadmin-laravel || true
+        docker run -d -p 8090:9000 --name tailadmin-laravel ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta

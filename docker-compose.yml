@@ -1,40 +1,25 @@
+version: '3.8'
+
 services:
-  mysql:
-    image: mysql:8.0
-    env:
-      MYSQL_DATABASE: tailadmin_laravel
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: root
+  app:
+    build:
+      context: .
+    container_name: tailadmin-laravel
     ports:
-      - 3306:3306
-    options: >-
-      --health-cmd="mysqladmin ping --silent"
-      --health-interval=10s
-      --health-timeout=5s
-      --health-retries=3
+      - "8090:9000"
     volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - tailadmin_network
-
-  web:
-    image: satyasy/tailadmin-laravel:beta
-    ports:
-      - "8090:8000"
+      - .:/var/www
     depends_on:
-      - mysql
+      - db
+
+  db:
+    image: mysql:8
+    container_name: tailadmin-db
+    restart: always
+    ports:
+      - "3306:3306"
     environment:
-      - DB_HOST=mysql
-      - DB_DATABASE=tailadmin_laravel
-      - DB_USERNAME=laravel
-      - DB_PASSWORD=password
-    networks:
-      - tailadmin_network
-
-volumes:
-  mysql_data:
-
-networks:
-  tailladmin_network:
-    driver: bridge
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root

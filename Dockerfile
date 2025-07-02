@@ -1,58 +1,29 @@
-FROM ubuntu:22.04
+FROM php:8.3-fpm
 
-# Install system dependencies
-RUN apt update -y && \
-    DEBIAN_FRONTEND=noninteractive apt install -y \
-    apache2 \
-    php \
-    php-fpm \
-    php-cli \
-    php-xml \
-    php-mbstring \
-    php-curl \
-    php-mysql \
-    php-gd \
-    php-zip \
-    php-bcmath \
-    php-tokenizer \
-    php-json \
-    php-pdo \
-    php-pdo-mysql \
-    npm \
-    nodejs \
-    unzip \
-    nano \
-    curl \
-    git \
-    && apt clean \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libonig-dev libxml2-dev libzip-dev \
+    libpq-dev libjpeg-dev libpng-dev libfreetype6-dev \
+    libmcrypt-dev libonig-dev libssl-dev \
+    nodejs npm
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer -o composer-setup.php && \
-    php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
-    rm composer-setup.php
+# Install Composer (latest)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Create application directory
-RUN mkdir -p /var/www/tailadmin-laravel
-
-# Copy application files
-COPY . /var/www/tailadmin-laravel
+# Install Node.js (latest stable via n package)
+RUN npm install -g n && n stable
 
 # Set working directory
-WORKDIR /var/www/tailadmin-laravel
+WORKDIR /var/www
 
-# Copy and run install script
-COPY install.sh /var/www/tailadmin-laravel/install.sh
-RUN chmod +x /var/www/tailadmin-laravel/install.sh
-RUN ./install.sh
+COPY . .
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/tailadmin-laravel
-RUN chmod -R 755 /var/www/tailadmin-laravel/storage
-RUN chmod -R 755 /var/www/tailadmin-laravel/bootstrap/cache
+RUN composer install
+RUN npm install && npm run build
+COPY .env.example .env
+RUN php artisan key:generate
+RUN php artisan migrate --seed
+RUN php artisan storage:link
 
-# Expose port
-EXPOSE 8000
-
-# Start the application
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+EXPOSE 9000
+CMD ["php-fpm"]
