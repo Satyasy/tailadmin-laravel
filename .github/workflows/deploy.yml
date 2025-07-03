@@ -24,14 +24,15 @@ jobs:
 
       - name: Build Docker Image (both tags)
         run: |
-            docker build -t ${{ secrets.DOCKERHUB_USERNAME }}_docker-tailadmin-laravel:beta -t ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta .
+            docker build -t satyasy-tailadmin-laravel:beta .
 
       - name: Push Image to DockerHub
         run: |
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta
+            docker tag satyasy-tailadmin-laravel:beta ${{ secrets.DOCKERHUB_USERNAME }}/satyasy-tailadmin-laravel:beta
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/satyasy-tailadmin-laravel:beta
 
       - name: Deploy Container
         run: |
             docker stop tailadmin-laravel || true && docker rm tailadmin-laravel || true
-            docker run -d -p 8090:9000 --name tailadmin-laravel ${{ secrets.DOCKERHUB_USERNAME }}_docker-tailadmin-laravel:beta
+            docker run -d -p 8090:9000 --name tailadmin-laravel satyasy-tailadmin-laravel:beta
 
