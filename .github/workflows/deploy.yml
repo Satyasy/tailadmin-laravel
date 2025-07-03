@@ -10,6 +10,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Set writable permissions before cleanup
+        run: chmod -R u+w node_modules
       - name: Checkout code
         uses: actions/checkout@v3
 
