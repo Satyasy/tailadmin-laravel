@@ -22,15 +22,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_PASS }}
 
-      - name: Build Docker Image
+      - name: Build Docker Image (both tags)
         run: |
-          docker build -t satyasy-tailadmin-laravel:beta .
+            docker build -t ${{ secrets.DOCKERHUB_USERNAME }}_docker-tailadmin-laravel:beta -t ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta .
 
       - name: Push Image to DockerHub
         run: |
-          docker push satyasy-tailadmin-laravel:beta
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/tailadmin-laravel:beta
 
-      - name: Deploy with Docker Compose
+      - name: Deploy Container
         run: |
-          docker-compose down --remove-orphans
-          docker-compose up -d --build
+            docker stop tailadmin-laravel || true && docker rm tailadmin-laravel || true
+            docker run -d -p 8090:9000 --name tailadmin-laravel ${{ secrets.DOCKERHUB_USERNAME }}_docker-tailadmin-laravel:beta
+
