@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
+    image: satyasy-tailadmin-laravel:beta
     container_name: tailadmin-laravel
     ports:
       - "8090:9000"
