@@ -10,8 +10,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Set writable permissions before cleanup
-        run: sudo chown -R $(whoami):$(whoami) node_modules
       - name: Checkout code
         uses: actions/checkout@v3
 
