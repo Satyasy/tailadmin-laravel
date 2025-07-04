@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
   app:
-    image: satyasy-tailadmin-laravel:beta
     build:
       context: .
     container_name: tailadmin-laravel
@@ -17,7 +16,7 @@ services:
         cp .env.example .env &&
         composer install &&
         npm install &&
-        npm run hot &&
+        npm run dev &&
         php artisan key:generate &&
         php artisan migrate --seed --force &&
         php artisan storage:link &&

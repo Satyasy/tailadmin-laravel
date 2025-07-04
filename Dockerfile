@@ -26,6 +26,7 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 # Set NPM registry mirror and install Node dependencies
 RUN npm config set registry https://registry.npmmirror.com/ \
     && npm install --fetch-timeout=60000 --cache-min=86400
+
 # Expose PHP-FPM port
 EXPOSE 9000
 
